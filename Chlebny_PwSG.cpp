@@ -448,6 +448,15 @@ LRESULT CALLBACK WndProcTransparent(HWND hWnd, UINT message, WPARAM wParam, LPAR
 	}
 	break;
 	case WM_DESTROY:
+	{
+		for (int i = 0; i < 7; i++)
+			DeleteObject(color[i]);
+		for (int i = 0; i < 6; i++)
+			DeleteObject(colorCross[i]);
+		DeleteObject(gray);
+		DeleteObject(frame);
+		DeleteObject(white);
+	}
 		break;
 	case WM_CREATE:
 		{
@@ -489,8 +498,9 @@ LRESULT CALLBACK WndProcTransparent(HWND hWnd, UINT message, WPARAM wParam, LPAR
 				SetTextColor(buffor, RGB(255, 0, 0));
 				SetBkMode(buffor, TRANSPARENT);
 
-				SelectObject(buffor, font);
+				auto old = SelectObject(buffor, font);
 				DrawText(buffor, s, (int)_tcslen(s), &rc, DT_CENTER | DT_TOP | DT_SINGLELINE);
+				SelectObject(buffor, old);
 				DeleteObject(font);
 			}
 			auto it = particles.begin();
@@ -505,9 +515,10 @@ LRESULT CALLBACK WndProcTransparent(HWND hWnd, UINT message, WPARAM wParam, LPAR
 					it->y + it->s <= 0 || it->y >= screenY) it = particles.erase(it);
 				else it++;
 			}
-			
-			BitBlt(GetDC(hWnd), 0, 0, screenX,
+			HDC dc = GetDC(hWnd);
+			BitBlt(dc, 0, 0, screenX,
 				screenY, buffor, 0, 0, SRCCOPY);
+			ReleaseDC(hWnd, dc);
 		}
 	}	break;
 	case WM_ERASEBKGND:
@@ -559,8 +570,8 @@ LRESULT CALLBACK WndProcGem(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 				RECT rc;
 				rc.left = 0;
 				rc.top = 0;
-				rc.right = pgems[i][j].size + 4;
-				rc.bottom = pgems[i][j].size + 4;
+				rc.right = pgems[i][j].size + 15;
+				rc.bottom = pgems[i][j].size + 15;
 
 				FillRect(hdc, &rc, color[pgems[i][j].color]);
 			} break;
@@ -938,8 +949,8 @@ void CorrectColor(HWND hwnd)
 		RECT rc;
 		rc.left = 0;
 		rc.top = 0;
-		rc.right = k.size + 4;
-		rc.bottom = k.size + 4;
+		rc.right = k.size + 5;
+		rc.bottom = k.size + 5;
 		FillRect(hdc, &rc, color[k.color]);
 		ReleaseDC(k.hWnd, hdc);
 	}
@@ -952,7 +963,7 @@ void CorrectColor(HWND hwnd)
 		rc.top = 0;
 		rc.right = k.size + 4;
 		rc.bottom = k.size + 4;
-		FillRect(hdc, &rc, CreateHatchBrush(HS_CROSS, colorr[k.color]));
+		FillRect(hdc, &rc, colorCross[k.color]);
 		ReleaseDC(k.hWnd, hdc);
 	} break;
 	case 3:
